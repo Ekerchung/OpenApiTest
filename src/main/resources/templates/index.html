@@ -1,0 +1,213 @@
+<!DOCTYPE HTML>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <title>Taifex api test</title>
+
+    <link rel="stylesheet" th:href="@{/css/main.css}"/>
+</head>
+
+<body>
+<div class="header">
+    臺灣期貨交易所 API - 串接測試
+</div>
+<div class="starter-template">
+    <table>
+        <Tr>
+            <th>日期</th>
+            <th>美金換台幣</th>
+            <th>人民幣換台幣</th>
+            <th>美金換人民幣</th>
+        </Tr>
+        <tr th:each="rate : ${exchangeRates}">
+            <td th:text="${rate['Date']}"></td>
+            <td th:text="${rate['USD/NTD']}"></td>
+            <td th:text="${rate['RMB/NTD']}"></td>
+            <td th:text="${rate['USD/RMB']}"></td>
+        </tr>
+    </table>
+</div>
+<div class="container">
+    <h1>匯率增刪改查功能實作</h1>
+
+    <!-- Search Form -->
+    <h2>查詢功能：依日期查詢匯率資料</h2>
+    <form class="search">
+        <label for="querydate">輸入查詢日期：(YYYY-MM-DD):</label>
+        <input id="querydate" type="text" name="date">
+        <button type="submit">Search</button>
+    </form>
+    <div id="visible" class="hidden">
+        <div style="color: red;font-size: 16px" class="result_search"></div>
+        <h2>查詢結果</h2>
+        <table>
+            <Tr>
+                <th>日期</th>
+                <th>美金換台幣</th>
+                <th>人民幣換台幣</th>
+                <th>美金換人民幣</th>
+            </Tr>
+            <tr>
+                <td id="hidden_date" th:text="${exchangeRate}"></td>
+                <td id="hidden_usdNtd" th:text="${exchangeRate}"></td>
+                <td id="hidden_rmbNtd" th:text="${exchangeRate}"></td>
+                <td id="hidden_usdRmb" th:text="${exchangeRate}"></td>
+            </tr>
+        </table>
+        <br><br><br><br>
+    </div>
+    <br><br><br><br>
+    <!-- Add Form -->
+    <h2>新增功能：添加匯率資料</h2>
+    <div style="color: red;font-size: 16px" class="result_add"></div>
+    <form class="add">
+        <label for="addDate">Date (YYYY-MM-DD):</label>
+        <input id="addDate" type="text" name="addDate">
+        <br>
+        <label for="usdRmb">USD to RMB:</label>
+        <input id="usdRmb" type="number" step="0.000000000000001" name="usdRmb">
+        <br>
+        <label for="usdNtd">USD to NTD:</label>
+        <input id="usdNtd" type="number" step="0.000000000000001" name="usdNtd">
+        <br>
+        <label for="rmbNtd">RMB to NTD:</label>
+        <input id="rmbNtd" type="number" step="0.000000000000001" name="rmbNtd">
+        <br>
+        <button type="submit">Add</button>
+    </form>
+    <br><br><br><br>
+    <!-- Update Form -->
+    <h2>修改功能：更新匯率資料</h2>
+    <div style="color: red;font-size: 16px" class="result_update"></div>
+    <form class="update">
+        <label for="updateDate">Date (YYYY-MM-DD):</label>
+        <input id="updateDate" type="text" name="updateDate">
+        <br>
+        <label for="updateUsdRmb">USD to RMB:</label>
+        <input id="updateUsdRmb" type="number" step="0.000000000000001" name="updateUsdRmb">
+        <br>
+        <label for="updateUsdNtd">USD to NTD:</label>
+        <input id="updateUsdNtd" type="number" step="0.000000000000001" name="updateUsdNtd">
+        <br>
+        <label for="updateRmbNtd">RMB to NTD:</label>
+        <input id="updateRmbNtd" type="number" step="0.000000000000001" name="updateRmbNtd">
+        <br>
+        <button type="submit">Update</button>
+    </form>
+   <br><br><br><br>
+    <!-- Delete Form -->
+    <h2>刪除功能：刪除匯率資料</h2>
+    <div style="color: red;font-size: 16px" class="result_delete"></div>
+    <form class="delete" action="/api/exchange-rate" method="DELETE">
+        <label for="deleteDate">輸入刪除日期(YYYY-MM-DD)：</label>
+        <input id="deleteDate" type="text" name="deleteDate">
+        <button type="submit">Delete</button>
+    </form>
+
+    <script src="/js/jquery-3.3.1.min.js"></script>
+    <script type = "text/javascript" th:inline="javascript">
+        var basePath = [[${#httpServletRequest.getScheme() + "://" + #httpServletRequest.getServerName() + ":" + #httpServletRequest.getServerPort() + #httpServletRequest.getContextPath()}]];
+        $(function () {
+
+            $('form.search').submit(function (event) {
+                event.preventDefault();
+                var date = $('input#querydate').val();
+                $.ajax({
+                    method: 'GET',
+                    url: basePath + '/api/exchange-rate',
+                    data: {date: date},
+                    dataType: 'json',
+                    success: function (data) {
+                        if (data == null) {
+                            $('div.result_search').html('找不到資料');
+                        } else {
+                            // 渲染到表單中
+                            $('#visible').removeClass('hidden');
+                            $('#hidden_date').text(data.date);
+                            $('#hidden_usdNtd').text(data.usdNtd);
+                            $('#hidden_rmbNtd').text(data.rmbNtd);
+                            $('#hidden_usdRmb').text(data.usdRmb);
+                        }
+                    },
+                    error: function (xhr, error) {
+                        $('div.result_search').html('發生錯誤：' + error);
+                    }
+                });
+            });
+
+            // Add Form
+            $('.add').submit(function(event) {
+                event.preventDefault(); // 阻止表單提交
+                var formData = {
+                    date: $('#addDate').val(),
+                    usdRmb: parseFloat($('#usdRmb').val()),
+                    usdNtd: parseFloat($('#usdNtd').val()),
+                    rmbNtd: parseFloat($('#rmbNtd').val())
+                };
+                var json = JSON.stringify(formData); // 將表單數據轉換為JSON字符串
+                $.ajax({
+                    method: 'POST',
+                    url: basePath + '/api/exchange-rate',
+                    contentType: 'application/json',
+                    data: json,
+                    success: function (data) {
+                        $('form.add').trigger('reset');
+                        $('div.result_add').html('資料添加成功!');
+                    },
+                    error: function (xhr, error) {
+                        $('div.result_add').html('發生錯誤：' + error);
+                    }
+                });
+            });
+
+            // Update Form
+            $('form.update').submit(function (event) {
+                event.preventDefault();
+                var data = {
+                    date: $('input#updateDate').val(),
+                    usdRmb: $('input#updateUsdRmb').val(),
+                    usdNtd: $('input#updateUsdNtd').val(),
+                    rmbNtd: $('input#updateRmbNtd').val()
+                };
+                $.ajax({
+                    method: 'PUT',
+                    url: '/api/exchange-rate',
+                    contentType: 'application/json',
+                    data: JSON.stringify(data),
+                    success: function () {
+                        $('form.update').trigger('reset');
+                        $('div.result_update').html('資料更新成功');
+                    },
+                    error: function (xhr, error) {
+                        $('div.result_update').html('發生錯誤：' + error);
+                    }
+                });
+            });
+
+            $('form.delete').submit(function (event) {
+                event.preventDefault();
+                var data = {
+                    date: $('input#deleteDate').val()
+                };
+                $.ajax({
+                    method: 'DELETE',
+                    url: '/api/exchange-rate',
+                    contentType: 'application/json',
+                    data: JSON.stringify(data),
+                    success: function () {
+                        $('form.delete').trigger('reset');
+                        $('div.result_delete').html('資料刪除成功');
+                    },
+                    error: function (xhr, error) {
+                        $('div.result_delete').html('發生錯誤：' + error);
+                    }
+                });
+            });
+        });
+    </script>
+</div>
+</body>
+</html>
